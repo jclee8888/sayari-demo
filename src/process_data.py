@@ -1,14 +1,17 @@
 def extract_company_details(company_data):
 
+# Key procurement logic
+
     if not company_data:
-        print('company data not recieved in extract_company_details')
+        print('Company data not recieved in extract_company_details')
         return None
     
     # print(f"company_data.label: {company_data.label}")
     # print(f"company_data.sanctioned: {company_data.sanctioned}")
     # print(f"company_data.countries: {company_data.countries}")
     # print(f"company_data.addresses: {company_data.addresses}")
-    print(f"company_data.risk: {company_data.risk}")
+
+    # print(f"company_data.risk: {company_data.risk}")
 
     return {
         "label": company_data.label,
@@ -18,41 +21,68 @@ def extract_company_details(company_data):
         "Risk Indicators": company_data.risk
     }
 
-
 def is_company_sanctioned(company):
     # Checks for any sanctions in place
-    return company.sanctioned("sanctioned", False)
-
+    print(f"Sanctioned status: {company.get('Sanctioned', False)}")
+    return company.get("Sanctioned", False)
 
 def is_us_based(company):
     # Geographic presence / locations. Sayari doesn't offer compliance cert data currently, so this is the next best thing. Assuming US aerospace companies do have certs (ITAR, DFARS, etc.).
-    return "USA" in company.countries
+    # print("is_us_based")
+    return "USA" in company.get("Countries", [])
 
 
 def get_high_risk_factors(company):
     # Risk indicators. Starting point for internal investigations
-    risk_factors = company.risk_factors
-    # return only risks with high priority risk factors
-    high_risks = [key for key, risk in risk_factors.items() if risk.get("level") in ["high", "elevated"]]
-    return high_risks
+    # print("get risk factors")
+    risk_factors = company.get("Risk Indicators", {})
 
+    # return only risks with high priority risk factors
+    high_risks = [key for key, risk in risk_factors.items() if getattr(risk, "level", "").lower() in ["critical", "high"]]
+    
+    #indirect sanctions flag. Companies may be owned by parent entities with sanctions
+    indirect_sanctions = any(key in ["owned_by_sanctioned_entity", "owned_by_entity_in_export_controls"] for key in high_risks)
+
+    print(f"high_risks: {high_risks}")
+    print(f"Indirect sanctions detected: {indirect_sanctions}")
+    return high_risks, indirect_sanctions
 
 def classify_company(company):
+    # Qualifying candidate companies based off of returned data
+    
+    # result dictionary
+    result = {
+        "US Based": is_us_based(company),
+        "Sanctioned": is_company_sanctioned(company),
+        "Indirectly Sanctioned": False,  # Will check this later
+        "Eligible": False,
+        "High-Critical Risks": [],
+        "Final Classification": ""
+    }
+
     if not company:
         return "No Data"
 
-    # disqualify if sanctioned
-    if is_company_sanctioned:
-        return "Disqualified"
+    # if the company has no US based offices, we're assuming they may not have the necessary certifications
+    if not result["US Based"]:
+        result["Final Classification"] = "Disqualified (Not U.S. Based)"
+        return result
 
-    # verify company at least has an office in USA
-    if is_us_based(company):
-        return "Likely Eligible"
+    # if companies are sanctioned, we disqualify them immediately
+    if result["Sanctioned"]:
+        result["Final Classification"] = "Disqualified (Sanctioned)"
+        return result
 
-    # looks at the risk factors
-    if get_high_risk_factors(company):
-        return "Requires Further Review"
+    risks, indirect_sanctions = get_high_risk_factors(company)
+    # storing risks, indirect sanctions to results
+    result["High-Critical Risks"] = risks
+    result["Indirectly Sanctioned"] = indirect_sanctions
 
+    # if companies are indirectly sanctioned (owned by sanctioned parent entity), we also disqualify them
+    if result["Indirectly Sanctioned"]:
+        result["Final Classification"] = "Disqualified (Indirect Sanctions)"
+        return result
 
-    return "Requires Further Review"
-    
+    result["Eligible"] = True
+    result["Final Classification"] = "Eligible"
+    return result
