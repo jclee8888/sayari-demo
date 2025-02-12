@@ -1,10 +1,12 @@
 def extract_company_details(company_data):
 # Key procurement logic
 
+    # If no company data is provided, print error message and return None
     if not company_data:
         print('Company data not recieved in extract_company_details')
         return None
     
+    # initialize and return library with company details
     return {
         "label": company_data.label,
         "Sanctioned": company_data.sanctioned,
@@ -21,7 +23,6 @@ def is_us_based(company):
     # Geographic presence / locations. Sayari doesn't offer compliance cert data currently, so this is the next best thing. Assuming US aerospace companies do have certs (ITAR, DFARS, etc.).
     return "USA" in company.get("Countries", [])
 
-
 def get_high_risk_factors(company):
     # Risk indicators. Starting point for internal investigations
     risk_factors = company.get("Risk Indicators", {})
@@ -33,6 +34,7 @@ def get_high_risk_factors(company):
     ]
     
     #indirect sanctions flag. Companies may be owned by parent entities with sanctions
+    # define list of risk factor keys that indicate indirect sanctions
     indirect_sanctions = any(
         key in [
             "owned_by_sanctioned_entity",
@@ -48,7 +50,7 @@ def get_high_risk_factors(company):
 def classify_company(company):
     # Qualifying candidate companies based off of returned data
 
-    # result dictionary
+    # company result dictionary
     result = {
         "Company Name": company.get("label", "unknown"),
         "US Based": is_us_based(company),
@@ -59,16 +61,15 @@ def classify_company(company):
         "Final Classification": ""
     }
 
-
     if not company:
         return "No Data"
 
+    # retrieve high-risk factors and check for indirect sanctions
     risks, indirect_sanctions = get_high_risk_factors(company)
 
     # store identified risks and indirect sanctions in results dictionary
     result["High-Critical Risks"] = risks
     result["Indirectly Sanctioned"] = indirect_sanctions
-
 
     # if the company has no US based offices, we're assuming they may not have the necessary certifications
     if not result["US Based"]:
