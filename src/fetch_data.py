@@ -9,21 +9,24 @@ client = Sayari(
     client_secret = os.getenv("CLIENT_SECRET"),
 )
 
-# Fetch company details
+# Fetch company details using Sayari aPI
 def fetch_company_profile(company):
 
+    # request to Sayari
     try:
-        # print(f"Fetching data for {company}")
         response = client.search.search_entity_get(limit=1, q=company)
 
+        # extract first result from returned data
         if response.data:
-            # print(f"response.data[0]: {response.data[0]}")
             print(f"fetch_data passed for {company}")
             return response.data[0]
+
+        # if no result, return none
         else:
             print(f"No Sayari records found for {company}")
             return None
 
+    # error handling
     except Exception as e:
         print(f"Error fetching data for {company}: {e}")
         return None
