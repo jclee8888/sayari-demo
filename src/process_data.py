@@ -3,7 +3,7 @@ def extract_company_details(company_data):
 
     # If no company data is provided, print error message and return None
     if not company_data:
-        print('Company data not recieved in extract_company_details')
+        print('Company data not received in extract_company_details')
         return None
     
     # initialize and return library with company details
@@ -74,17 +74,14 @@ def classify_company(company):
     # if the company has no US based offices, we're assuming they may not have the necessary certifications
     if not result["US Based"]:
         result["Final Classification"] = "Disqualified (Not U.S. Based)"
-        return result
 
     # if companies are sanctioned, we disqualify them immediately
     if result["Sanctioned"]:
         result["Final Classification"] = "Disqualified (Sanctioned)"
-        return result
 
     # if companies are indirectly sanctioned (owned by sanctioned parent entity), we also disqualify them
     if result["Indirectly Sanctioned"]:
         result["Final Classification"] = "Disqualified (Indirect Sanctions)"
-        return result
 
     # else we set company to 'eligible' if:  1) it is US based; 2) not directly sanctioned; and 3) not indirectly sanctioned
     result["Eligible"] = True

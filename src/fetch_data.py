@@ -22,12 +22,10 @@ def fetch_company_profile(company):
             return response.data[0]
 
         # if no result, return none
-        else:
-            print(f"No Sayari records found for {company}")
-            return None
+        print(f"No Sayari records found for {company}")
+        return None
 
     # error handling
     except Exception as e:
         print(f"Error fetching data for {company}: {e}")
         return None
-

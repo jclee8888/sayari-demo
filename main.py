@@ -7,8 +7,8 @@ from src.generate_report import display_report
 
 
 def main():
-    # List of companies that respond to RFI. In next iterations, this list could be ingested through .csv upload, etc.
-    companies = ["Aerotech Solutions", "Orbital Materials", "Global Aerotech", "Sepehr Energy", "Textron Inc"]
+    # List of companies that respond to RFI. In next iterations, this list could be ingested through .csv upload, or directly from the client workflow
+    companies = ["Aerotech Solutions", "Global Aerotech", "Sepehr Energy", "Textron Inc"]
     
     # initialize processed companies list
     processed_companies = []
